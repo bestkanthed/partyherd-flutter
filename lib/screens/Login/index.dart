@@ -1,7 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+import 'package:partyherd/actions/auth.dart';
+import 'package:partyherd/reducers/index.dart';
+import 'package:redux_thunk/redux_thunk.dart';
 import '../Chats/index.dart';
 import 'package:partyherd/widgets/CustomButton.dart';
+import 'package:toast/toast.dart';
 
 class Login extends StatefulWidget {
   static const String route = "LOGIN";
@@ -12,31 +17,6 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   String email;
   String password;
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  Future<void> loginUser(BuildContext context) async {
-    try {
-      FirebaseUser user = await _auth.signInWithEmailAndPassword(email: email, password: password);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Chats(
-            user: user,
-          ),
-        ),
-      );
-    } catch (err) {
-      print('Error in loginUser() : $err');
-      final scaffold = Scaffold.of(context);
-      scaffold.showSnackBar(
-        SnackBar(
-          content: Text(err.message == null ? err.toString() : err.message),
-          action: SnackBarAction(label: 'OKAY', onPressed: scaffold.hideCurrentSnackBar),
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,13 +61,12 @@ class _LoginState extends State<Login> {
               border: const OutlineInputBorder(),
             ),
           ),
-          Builder(
-            builder: (BuildContext context) {
+          StoreConnector<AppState, VoidCallback>(
+            converter: (store) => () => store.dispatch(login(email, password)),
+            builder: (context, login) {
               return CustomButton(
                 text: "Log In",
-                callback: () async {
-                  await loginUser(context);
-                },
+                callback: login,
               );
             }
           ),
